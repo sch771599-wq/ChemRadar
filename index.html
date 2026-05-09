@@ -22,7 +22,6 @@ import re
 
 st.set_page_config(page_title="ChemRadar", layout="wide")
 
-# ========== HEADER ==========
 col_logo1, col_logo2, col_logo3 = st.columns([1, 10, 1])
 with col_logo2:
     st.markdown(
@@ -35,7 +34,6 @@ with col_logo2:
 
 st.markdown("---")
 
-# ========== SIDEBAR ==========
 with st.sidebar:
     st.markdown("""
 ## 📡🧪 ChemRadar
@@ -113,9 +111,7 @@ rimonabant NOT review NOT editorial
 - Quotes required for exact phrases
 """)
 
-# ========== ФУНКЦИЯ ДЛЯ ЛЮБЫХ SMILES ==========
 def safe_smiles_to_mol(smiles):
-    """Convert SMILES to molecule - handles aromaticity errors"""
     original = smiles.strip()
     smiles = original.replace("О", "O").replace("о", "O").replace("С", "C").replace("с", "C")
     smiles = ' '.join(smiles.split())
@@ -159,7 +155,7 @@ def safe_smiles_to_mol(smiles):
         except:
             pass
     
-    return None, f"❌ Invalid SMILES: {original[:60]}..."
+    return None, f"❌ Invalid SMILES: {original[:60]}"
 
 def get_safe_inchikey(mol):
     try:
@@ -296,8 +292,6 @@ def find_and_show_analogs(cid, smiles, name, keywords, ikey):
             elif name:
                 url_chemspider = f"https://www.chemspider.com/Search.aspx?q={urllib.parse.quote(name)}"
                 st.link_button("🔬 ChemSpider", url_chemspider, use_container_width=True)
-
-# ========== MAIN INTERFACE ==========
 
 left_col, right_col = st.columns([1, 1], gap="medium")
 
