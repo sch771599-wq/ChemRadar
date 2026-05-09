@@ -1,3 +1,17 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📡🧪 ChemRadar — Chemical Literature Scanner</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.58.3/build/stlite.css"
+    />
+  </head>
+  <body>
+    <streamlit-app>
+      <app-file name="streamlit_app.py" entrypoint>
 import streamlit as st
 from rdkit import Chem
 from rdkit.Chem import Draw
@@ -106,7 +120,6 @@ def safe_smiles_to_mol(smiles):
     smiles = original.replace("О", "O").replace("о", "O").replace("С", "C").replace("с", "C")
     smiles = ' '.join(smiles.split())
     
-    # Method 1: standard parsing
     try:
         mol = Chem.MolFromSmiles(smiles)
         if mol:
@@ -118,7 +131,6 @@ def safe_smiles_to_mol(smiles):
     except:
         pass
     
-    # Method 2: parse without sanitization
     try:
         mol = Chem.MolFromSmiles(smiles, sanitize=False)
         if mol:
@@ -134,7 +146,6 @@ def safe_smiles_to_mol(smiles):
     except:
         pass
     
-    # Method 3: remove numbers after atoms
     cleaned = re.sub(r'([a-z])(\d+)', r'\1', smiles)
     if cleaned != smiles:
         try:
@@ -150,7 +161,6 @@ def safe_smiles_to_mol(smiles):
     
     return None, f"❌ Invalid SMILES: {original[:60]}..."
 
-# ========== GET InChIKey ==========
 def get_safe_inchikey(mol):
     try:
         return Chem.MolToInchiKey(mol)
@@ -161,7 +171,6 @@ def get_safe_inchikey(mol):
         except:
             return "N/A"
 
-# ========== GET DATA FROM PUBCHEM ==========
 def get_pubchem_data(smiles):
     try:
         compounds = pcp.get_compounds(smiles, 'smiles')
@@ -176,7 +185,6 @@ def get_pubchem_data(smiles):
         pass
     return None
 
-# ========== BUILD SEARCH URLS ==========
 def build_search_urls(name, keywords, cid, ikey, smiles):
     urls = {}
     
@@ -191,8 +199,6 @@ def build_search_urls(name, keywords, cid, ikey, smiles):
         urls['pubmed'] = f"https://pubmed.ncbi.nlm.nih.gov/?term={urllib.parse.quote(search_terms)}"
         urls['scholar'] = f"https://scholar.google.com/scholar?q={urllib.parse.quote(search_terms)}"
         urls['europe_pmc'] = f"https://europepmc.org/search?query={urllib.parse.quote(search_terms)}"
-        
-        # For regular Google - only first word, no filter
         simple_terms = search_terms.split()[0] if search_terms.split() else search_terms
         urls['google'] = f"https://www.google.com/search?q={urllib.parse.quote(simple_terms)}"
     
@@ -205,10 +211,7 @@ def build_search_urls(name, keywords, cid, ikey, smiles):
     
     return urls
 
-# ========== ПОИСК АНАЛОГОВ С НЕСКОЛЬКИМИ ССЫЛКАМИ ==========
 def find_and_show_analogs(cid, smiles, name, keywords, ikey):
-    """Finds similar compounds and shows multiple links for each"""
-    
     st.divider()
     st.subheader("🔬 Structural Analogs")
     st.caption("Compounds with similar chemical structure")
@@ -217,7 +220,6 @@ def find_and_show_analogs(cid, smiles, name, keywords, ikey):
         st.info("No identifier available for analog search")
         return
     
-    # Try to find analogs via PubChem API
     analogs_list = []
     try:
         with st.spinner("Searching for similar structures in PubChem..."):
@@ -237,10 +239,8 @@ def find_and_show_analogs(cid, smiles, name, keywords, ikey):
                     analog_mol = Chem.MolFromSmiles(analog_smiles)
                     
                     if analog_mol:
-                        # Structure image
                         st.image(Draw.MolToImage(analog_mol, size=(150, 150)), caption=f"CID: {comp.cid}")
                         
-                        # Name
                         if comp.iupac_name:
                             short_name = comp.iupac_name[:40] + "..." if len(comp.iupac_name) > 40 else comp.iupac_name
                             st.caption(short_name)
@@ -248,28 +248,23 @@ def find_and_show_analogs(cid, smiles, name, keywords, ikey):
                             short_syn = comp.synonyms[0][:40] + "..." if len(comp.synonyms[0]) > 40 else comp.synonyms[0]
                             st.caption(short_syn)
                         
-                        # Multiple links for each analog
                         st.markdown("**Links:**")
                         
-                        # PubMed link
                         pubmed_url = f"https://pubmed.ncbi.nlm.nih.gov/?term={comp.cid}[uid]"
                         if keywords:
                             pubmed_url = f"https://pubmed.ncbi.nlm.nih.gov/?term=({comp.cid}[uid])+AND+({keywords})"
                         st.link_button("📖 PubMed", pubmed_url, use_container_width=True)
                         
-                        # PubChem link
                         pubchem_url = f"https://pubchem.ncbi.nlm.nih.gov/compound/{comp.cid}"
                         st.link_button("🧬 PubChem", pubchem_url, use_container_width=True)
                         
-                        # Google Scholar link
                         scholar_query = comp.iupac_name if comp.iupac_name else str(comp.cid)
                         scholar_url = f"https://scholar.google.com/scholar?q={urllib.parse.quote(scholar_query)}"
                         st.link_button("🎓 Scholar", scholar_url, use_container_width=True)
                         
-                except Exception as e:
-                    st.warning(f"Could not load analog {idx+1}")
+                except:
+                    pass
     else:
-        # If no analogs found via API, show alternative search links
         st.info("No similar compounds automatically found. Try searching manually:")
         
         st.markdown("**Search for structural analogs manually:**")
@@ -326,31 +321,30 @@ with left_col:
     
     st.caption("💡 Full guide in the left sidebar")
     
-    # Submit button for convenience (Enter doesn't work in Streamlit text_area)
     submit_button = st.button("🔍 Search", type="primary", use_container_width=True)
 
-# Determine if we should process
-should_process = user_smiles and (submit_button or st.session_state.get('processed', False))
-if user_smiles and not st.session_state.get('processed', False) and submit_button:
+if "processed" not in st.session_state:
+    st.session_state.processed = False
+
+should_process = user_smiles and (submit_button or st.session_state.get("processed", False))
+if user_smiles and not st.session_state.get("processed", False) and submit_button:
     st.session_state.processed = True
     should_process = True
 elif not user_smiles:
     st.session_state.processed = False
 
 with right_col:
-    if should_process or (user_smiles and st.session_state.get('processed', False)):
+    if should_process or (user_smiles and st.session_state.get("processed", False)):
         mol, warning = safe_smiles_to_mol(user_smiles)
         
         if mol:
             ikey = get_safe_inchikey(mol)
             pubchem_data = get_pubchem_data(user_smiles)
-            cid = pubchem_data['cid'] if pubchem_data else None
-            name = pubchem_data['name'] if pubchem_data else None
+            cid = pubchem_data["cid"] if pubchem_data else None
+            name = pubchem_data["name"] if pubchem_data else None
             
-            # Structure
             st.image(Draw.MolToImage(mol, size=(300, 300)), caption="Molecule Structure")
             
-            # Info
             st.code(f"InChIKey: {ikey}")
             if cid:
                 st.success(f"PubChem CID: {cid}")
@@ -363,34 +357,30 @@ with right_col:
             
             st.divider()
             
-            # Build URLs
             urls = build_search_urls(name, keywords, cid, ikey, user_smiles)
             
             st.subheader("🔍 Search Literature")
             
-            # Academic databases
             st.markdown("**📚 Academic Databases:**")
-            if 'pubmed' in urls:
-                st.link_button("📖 PubMed", urls['pubmed'], use_container_width=True)
-            if 'scholar' in urls:
-                st.link_button("🎓 Google Scholar", urls['scholar'], use_container_width=True)
-            if 'europe_pmc' in urls:
-                st.link_button("📚 Europe PMC", urls['europe_pmc'], use_container_width=True)
+            if "pubmed" in urls:
+                st.link_button("📖 PubMed", urls["pubmed"], use_container_width=True)
+            if "scholar" in urls:
+                st.link_button("🎓 Google Scholar", urls["scholar"], use_container_width=True)
+            if "europe_pmc" in urls:
+                st.link_button("📚 Europe PMC", urls["europe_pmc"], use_container_width=True)
             
             st.markdown("---")
             st.markdown("**📄 Patents & Compounds:**")
-            st.link_button("📑 Google Patents", urls['patents'], use_container_width=True)
-            st.link_button("🧬 PubChem", urls['pubchem'], use_container_width=True)
+            st.link_button("📑 Google Patents", urls["patents"], use_container_width=True)
+            st.link_button("🧬 PubChem", urls["pubchem"], use_container_width=True)
             
             st.markdown("---")
             st.markdown("**🌐 General Web:**")
-            if 'google' in urls:
-                st.link_button("🌐 Google", urls['google'], use_container_width=True)
+            if "google" in urls:
+                st.link_button("🌐 Google", urls["google"], use_container_width=True)
             
-            # Search for similar compounds with multiple links
             find_and_show_analogs(cid, user_smiles, name, keywords, ikey)
             
-            # Keep processed state
             st.session_state.processed = True
             
         else:
@@ -398,7 +388,6 @@ with right_col:
             st.info("💡 Try copying SMILES from [PubChem](https://pubchem.ncbi.nlm.nih.gov)")
             st.session_state.processed = False
 
-# ========== FOOTER ==========
 st.divider()
 st.markdown(
     "<div style='text-align: center; color: #888; font-size: 0.8rem;'>"
@@ -406,3 +395,12 @@ st.markdown(
     "</div>", 
     unsafe_allow_html=True
 )
+      </app-file>
+      <app-requirements>
+rdkit-pypi
+pubchempy
+      </app-requirements>
+    </streamlit-app>
+    <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.58.3/build/stlite.js"></script>
+  </body>
+</html>
