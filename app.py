@@ -1,17 +1,3 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>📡🧪 ChemRadar — Chemical Literature Scanner</title>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.58.3/build/stlite.css"
-    />
-  </head>
-  <body>
-    <streamlit-app>
-      <app-file name="streamlit_app.py" entrypoint>
 import streamlit as st
 from rdkit import Chem
 from rdkit.Chem import Draw
@@ -195,8 +181,11 @@ def build_search_urls(name, keywords, cid, ikey, smiles):
         urls['pubmed'] = f"https://pubmed.ncbi.nlm.nih.gov/?term={urllib.parse.quote(search_terms)}"
         urls['scholar'] = f"https://scholar.google.com/scholar?q={urllib.parse.quote(search_terms)}"
         urls['europe_pmc'] = f"https://europepmc.org/search?query={urllib.parse.quote(search_terms)}"
+        
+        # Усиленная фильтрация для обычного Google (исключаем коммерцию и новости)
         simple_terms = search_terms.split()[0] if search_terms.split() else search_terms
-        urls['google'] = f"https://www.google.com/search?q={urllib.parse.quote(simple_terms)}"
+        google_exclude = "-buy -price -pharmacy -shop -store -amazon -ebay -tablet -drugstore -review -rating -"store" -price -cost -"for sale" -"online shop""
+        urls['google'] = f"https://www.google.com/search?q={urllib.parse.quote(simple_terms)}+{urllib.parse.quote(google_exclude)}"
     
     urls['patents'] = f"https://patents.google.com/?q={ikey}"
     
@@ -389,12 +378,3 @@ st.markdown(
     "</div>", 
     unsafe_allow_html=True
 )
-      </app-file>
-      <app-requirements>
-rdkit-pypi
-pubchempy
-      </app-requirements>
-    </streamlit-app>
-    <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.58.3/build/stlite.js"></script>
-  </body>
-</html>
