@@ -182,9 +182,9 @@ def build_search_urls(name, keywords, cid, ikey, smiles):
         urls['scholar'] = f"https://scholar.google.com/scholar?q={urllib.parse.quote(search_terms)}"
         urls['europe_pmc'] = f"https://europepmc.org/search?query={urllib.parse.quote(search_terms)}"
         
-        # Усиленная фильтрация для обычного Google (синтаксис исправлен)
+        # Исправленная строка google_exclude
         simple_terms = search_terms.split()[0] if search_terms.split() else search_terms
-        google_exclude = '-buy -price -pharmacy -shop -store -amazon -ebay -tablet -drugstore -review -rating -"store" -price -cost -"for sale" -"online shop"'
+        google_exclude = '-buy -price -pharmacy -shop -store -amazon -ebay -tablet -drugstore -review -rating -\"store\" -price -cost -\"for sale\" -\"online shop\"'
         urls['google'] = f"https://www.google.com/search?q={urllib.parse.quote(simple_terms)}+{urllib.parse.quote(google_exclude)}"
     
     urls['patents'] = f"https://patents.google.com/?q={ikey}"
